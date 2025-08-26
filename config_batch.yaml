@@ -1,0 +1,258 @@
+# Batch Processing Configuration for Healthcare Data QA Pipeline
+# This configuration defines multiple data sources for batch processing
+
+# Database configuration
+database:
+  primary:
+    host: "localhost"
+    port: 5432
+    database: "healthcare_qa"
+    username: "healthcare_user"
+    password: "secure_password"
+  
+  staging:
+    host: "localhost"
+    port: 5432
+    database: "healthcare_staging"
+    username: "staging_user"
+    password: "staging_password"
+
+# Batch processing sources
+batch_sources:
+  - name: "cdc_national_health_interview"
+    source_type: "cdc"
+    dataset_name: "NHIS_2023"
+    description: "National Health Interview Survey 2023"
+    parameters:
+      year: 2023
+      survey_type: "adult"
+      file_format: "csv"
+    quality_thresholds:
+      completeness: 0.95
+      accuracy: 0.90
+      consistency: 0.85
+    validation_rules:
+      - "age_range_18_120"
+      - "valid_gender_codes"
+      - "complete_demographics"
+    
+  - name: "cms_medicare_claims"
+    source_type: "cms"
+    dataset_name: "Medicare_Claims_2023_Q4"
+    description: "Medicare claims data Q4 2023"
+    parameters:
+      year: 2023
+      quarter: 4
+      claim_type: "inpatient"
+    quality_thresholds:
+      completeness: 0.98
+      accuracy: 0.95
+      consistency: 0.90
+    validation_rules:
+      - "valid_icd_codes"
+      - "complete_claim_amounts"
+      - "provider_id_validation"
+    
+  - name: "fda_adverse_events"
+    source_type: "fda"
+    dataset_name: "FAERS_2023_Q3"
+    description: "FDA Adverse Event Reporting System Q3 2023"
+    parameters:
+      year: 2023
+      quarter: 3
+      include_medical_devices: true
+    quality_thresholds:
+      completeness: 0.92
+      accuracy: 0.88
+      consistency: 0.85
+    validation_rules:
+      - "valid_drug_names"
+      - "complete_event_dates"
+      - "reporter_validation"
+    
+  - name: "mimic_iv_demo"
+    source_type: "mimic"
+    dataset_name: "MIMIC_IV_Demo"
+    description: "MIMIC-IV Clinical Database Demo Set"
+    parameters:
+      version: "2.2"
+      include_notes: false
+    quality_thresholds:
+      completeness: 0.96
+      accuracy: 0.94
+      consistency: 0.92
+    validation_rules:
+      - "valid_patient_ids"
+      - "complete_vital_signs"
+      - "temporal_consistency"
+    
+  - name: "uci_heart_disease"
+    source_type: "uci_heart"
+    dataset_name: "Heart_Disease_UCI"
+    description: "UCI Heart Disease Dataset"
+    parameters:
+      include_target: true
+      include_metadata: true
+    quality_thresholds:
+      completeness: 0.93
+      accuracy: 0.91
+      consistency: 0.89
+    validation_rules:
+      - "valid_age_range"
+      - "complete_clinical_measures"
+      - "target_variable_validation"
+
+# Quality assurance parameters
+quality_assurance:
+  completeness:
+    enabled: true
+    threshold: 0.95
+    report_missing_by_column: true
+    report_missing_by_row: true
+  
+  accuracy:
+    enabled: true
+    threshold: 0.90
+    validate_ranges: true
+    validate_formats: true
+    validate_codes: true
+  
+  consistency:
+    enabled: true
+    threshold: 0.85
+    check_temporal_consistency: true
+    check_cross_field_consistency: true
+  
+  timeliness:
+    enabled: true
+    max_days_old: 365
+    date_column: "admission_date"
+  
+  uniqueness:
+    enabled: true
+    primary_key: "patient_id"
+    check_exact_duplicates: true
+    check_fuzzy_duplicates: false
+
+# Data cleaning configuration
+data_cleaning:
+  handle_missing_values:
+    enabled: true
+    strategy: "auto"
+    strategies_by_type:
+      numeric: "median"
+      categorical: "mode"
+      datetime: "forward_fill"
+  
+  standardize_dates:
+    enabled: true
+    date_format: "%Y-%m-%d"
+    parse_flexible: true
+  
+  standardize_categorical:
+    enabled: true
+    mappings:
+      gender:
+        M: "Male"
+        F: "Female"
+        U: "Unknown"
+        O: "Other"
+      race:
+        W: "White"
+        B: "Black"
+        A: "Asian"
+        H: "Hispanic"
+        O: "Other"
+  
+  remove_duplicates:
+    enabled: true
+    method: "exact"
+    subset_columns: ["patient_id"]
+  
+  normalize_numeric:
+    enabled: true
+    method: "zscore"
+    columns: ["age", "total_charges", "length_of_stay"]
+
+# Risk assessment configuration
+risk_assessment:
+  enabled: true
+  priority_levels:
+    low: 0.1
+    medium: 0.3
+    high: 0.7
+    critical: 0.9
+  
+  risk_types:
+    missing_data:
+      enabled: true
+      threshold: 0.05
+    data_inconsistencies:
+      enabled: true
+      threshold: 0.1
+    outliers:
+      enabled: true
+      method: "iqr"
+      threshold: 3.0
+    duplicates:
+      enabled: true
+      threshold: 0.02
+    invalid_codes:
+      enabled: true
+      validate_icd: true
+      validate_cpt: true
+    privacy_risks:
+      enabled: true
+      phi_detection: true
+      direct_identifiers: ["ssn", "phone", "email", "address"]
+
+# Output configuration
+output:
+  directory: "batch_output"
+  create_timestamped_folders: true
+  save_cleaned_data: true
+  save_validation_reports: true
+  save_risk_assessments: true
+  formats:
+    - "csv"
+    - "json"
+    - "parquet"
+  
+  reports:
+    create_summary: true
+    create_detailed: true
+    include_visualizations: true
+    format: "html"
+
+# Logging configuration
+logging:
+  level: "INFO"
+  file: "batch_processing.log"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  rotation:
+    enabled: true
+    max_size: "10MB"
+    backup_count: 5
+
+# API configuration
+api:
+  timeout: 300
+  retry_attempts: 3
+  retry_delay: 5
+  rate_limit:
+    requests_per_minute: 60
+    requests_per_hour: 1000
+
+# Performance settings
+performance:
+  chunk_size: 10000
+  max_workers: 4
+  memory_limit_gb: 8
+  parallel_processing: true
+  
+# Validation and testing
+validation:
+  run_unit_tests: false
+  create_test_reports: true
+  validate_config: true
+  check_dependencies: true
