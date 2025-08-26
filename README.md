@@ -512,13 +512,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **UCI Machine Learning Repository**: For heart disease dataset
 - **Healthcare Data Scientists**: Community feedback and contributions
 
-## 📞 Contact
-
-- **Project Maintainer**: Healthcare Data QA Team
-- **Email**: healthcare-data-qa@example.com
-- **Slack**: [#healthcare-data-qa](https://slack.com/channels/healthcare-data-qa)
-- **Twitter**: [@healthcare_data_qa](https://twitter.com/healthcare_data_qa)
-
 ---
 
 **Made with ❤️ for better healthcare data quality**
